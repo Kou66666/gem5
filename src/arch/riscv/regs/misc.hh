@@ -58,6 +58,7 @@
 #include "cpu/reg_class.hh"
 #include "debug/MiscRegs.hh"
 #include "enums/RiscvType.hh"
+#include "arch/riscv/regs/matrix.hh"
 
 namespace gem5
 {
@@ -246,6 +247,12 @@ enum MiscRegIndex
     MISCREG_HPMCOUNTER29H,
     MISCREG_HPMCOUNTER30H,
     MISCREG_HPMCOUNTER31H,
+
+    MISCREG_TMCSR,
+    MISCREG_TMDATA,
+    MISCREG_TMSIZE,
+    MISCREG_TMM, // Read-only
+    MISCREG_TMN, // Read-only
 
     NUM_PHYS_MISCREGS,
 
@@ -465,6 +472,12 @@ enum CSRIndex
     CSR_MHPMCOUNTER30H = 0xB9E,
     CSR_MHPMCOUNTER31H = 0xB9F,
     // rv32 only csr register end
+
+    CSR_TMCSR = 0x802,
+    CSR_TMDATA = 0x803,
+    CSR_TMSIZE = 0x804,
+    CSR_TMM = 0xcc0,
+    CSR_TMN = 0xcc1,
 
     CSR_MHPMEVENT03 = 0x323,
     CSR_MHPMEVENT04 = 0x324,
@@ -1181,7 +1194,18 @@ const std::unordered_map<int, CSRMetadata> CSRData = {
     {CSR_VTYPE,
         {"vtype", MISCREG_VTYPE, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}},
     {CSR_VLENB,
-        {"VLENB", MISCREG_VLENB, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}}
+        {"VLENB", MISCREG_VLENB, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}},
+
+    {CSR_TMCSR,
+        {"tmcsr", MISCREG_TMCSR, rvTypeFlags(RV64, RV32), isaExtsFlags('n')}},
+    {CSR_TMDATA,
+        {"tmdata", MISCREG_TMDATA, rvTypeFlags(RV64, RV32), isaExtsFlags('n')}},
+    {CSR_TMSIZE,
+        {"tmsize", MISCREG_TMSIZE, rvTypeFlags(RV64, RV32), isaExtsFlags('n')}},
+    {CSR_TMM,
+        {"tmm", MISCREG_TMM, rvTypeFlags(RV64, RV32), isaExtsFlags()}},
+    {CSR_TMN,
+        {"tmn", MISCREG_TMN, rvTypeFlags(RV64, RV32), isaExtsFlags()}}, // Read-only
 };
 
 /**
@@ -1278,6 +1302,20 @@ BitUnion64(SENVCFG)
     Bitfield<3,1> wpri_3;
     Bitfield<0> fiom;
 EndBitUnion(SENVCFG)
+
+BitUnion64(TMDATA)
+    Bitfield<31, 24> reserved;
+    Bitfield<23, 16> tile_c_datatype;
+    Bitfield<15, 8> tile_b_datatype;
+    Bitfield<7, 0> tile_a_datatype;
+EndBitUnion(TMDATA)
+
+BitUnion64(TMSIZE)
+    Bitfield<31, 30> reserved;
+    Bitfield<29, 20> k;
+    Bitfield<19, 10> n;
+    Bitfield<9, 0> m;
+EndBitUnion(TMSIZE)
 
 const off_t MXL_OFFSETS[enums::Num_RiscvType] = {
     [RV32] = (sizeof(uint32_t) * 8 - 2),
