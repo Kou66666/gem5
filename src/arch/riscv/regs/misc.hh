@@ -58,7 +58,6 @@
 #include "cpu/reg_class.hh"
 #include "debug/MiscRegs.hh"
 #include "enums/RiscvType.hh"
-#include "arch/riscv/regs/matrix.hh"
 
 namespace gem5
 {

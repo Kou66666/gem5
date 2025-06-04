@@ -51,6 +51,7 @@
 
 #include "arch/riscv/regs/float.hh"
 #include "arch/riscv/regs/int.hh"
+#include "arch/riscv/regs/mat.hh"
 #include "arch/riscv/regs/vector.hh"
 #include "base/types.hh"
 #include "cpu/reg_class.hh"

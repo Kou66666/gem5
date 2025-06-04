@@ -45,6 +45,7 @@
 #include "arch/riscv/pcstate.hh"
 #include "arch/riscv/regs/float.hh"
 #include "arch/riscv/regs/int.hh"
+#include "arch/riscv/regs/mat.hh"
 #include "arch/riscv/regs/misc.hh"
 #include "arch/riscv/regs/vector.hh"
 #include "base/bitfield.hh"
@@ -251,7 +252,7 @@ namespace
 RegClass vecElemClass(VecElemClass, VecElemClassName, 0, debug::IntRegs);
 RegClass vecPredRegClass(VecPredRegClass, VecPredRegClassName, 0,
         debug::IntRegs);
-RegClass matRegClass(MatRegClass, MatRegClassName, 0, debug::MatRegs);
+// RegClass matRegClass(MatRegClass, MatRegClassName, 0, debug::MatRegs);
 RegClass ccRegClass(CCRegClass, CCRegClassName, 0, debug::IntRegs);
 
 } // anonymous namespace

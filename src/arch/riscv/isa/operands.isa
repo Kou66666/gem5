@@ -72,6 +72,10 @@ def operands {{
     'sp': IntReg('ud', 'StackPointerReg', 'IsInteger', 2),
     'spd': IntReg('ud', 'StackPointerReg', 'IsInteger', 1),
 
+    'tmd': MatRegOp('sb', 'TMD', 'IsMatrix', 1),
+    'tms1': MatRegOp('sb', 'TMS1', 'IsMatrix', 2),
+    'tms2': MatRegOp('sb', 'TMS2', 'IsMatrix', 3),
+
     'a0': IntReg('ud', '10', 'IsInteger', 1),
     'a1': IntReg('ud', '11', 'IsInteger', 2),
 

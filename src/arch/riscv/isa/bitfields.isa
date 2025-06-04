@@ -47,6 +47,11 @@ def bitfield RS1    <19:15>;
 def bitfield RS2    <24:20>;
 def bitfield FUNCT7 <31:25>;
 
+// Matrix
+def bitfield TMS2   <24:20>;
+def bitfield TMS1   <19:15>;
+def bitfield TMD    <11:7>;
+
 // Bit shifts
 def bitfield SRTYPE <30>;
 def bitfield SHAMT5 <24:20>;

@@ -2822,6 +2822,37 @@ decode QUADRANT default Unknown::unknown() {
             }
         }
 
+        // Custom0 matrix instructions
+        0x2: decode FUNCT3 {
+            0x0: decode VFUNCT6 {
+                0x1: MatrixTmmFormat::tmm({{
+                    // Perform matrix multiplication and
+                    // accumulation using outer product
+                    int m, n, k;
+                    for (k = 0; k < 2; k++) {
+                        auto col_tms1 = tms1.asVSlice<int>(k);
+                        auto row_tms2 = tms2.asHSlice<int>(k);
+                        for (m = 0; m < 2; m++) {
+                            auto row_tmd = tmd.asHSlice<int>(m);
+                            for (n = 0; n < 3; n++) {
+                                row_tmd[n] += col_tms1[m] * row_tms2[n];
+                            }
+                        }
+                    }
+                }}, MatrixOp);
+
+                0x0: MatrixLoad::tlda({{
+                    int m, n;
+                    for (m = 0; m < 2; m++) {
+                        auto row_tmd = tmd.asHSlice<int>(m);
+                        for (n = 0; n < 2; n++) {
+                            row_tmd[n] = Mem_sb;
+                        }
+                    }
+                }});
+            }
+        }
+
         0x15: decode FUNCT3 {
             // OPIVV
             0x0: decode VFUNCT6 {
