@@ -2861,6 +2861,26 @@ decode QUADRANT default Unknown::unknown() {
                     }
                 }});
 
+                0x3: MatrixStoreA::tmsta({{
+                    int m, n;
+                    for (m = 0; m < 2; m++) {
+                        auto row_tms1 = tms1.asHSlice<int>(m);
+                        for (n = 0; n < 2; n++) {
+                            *((uint8_t*)&Mem + m * 2 + n) = row_tms1[n];
+                        }
+                    }
+                }});
+
+                0x4: MatrixStoreB::tmstb({{
+                    int m, n;
+                    for (m = 0; m < 2; m++) {
+                        auto row_tms1 = tms1.asHSlice<int>(m);
+                        for (n = 0; n < 3; n++) {
+                            *((uint8_t*)&Mem + m * 3 + n) = row_tms1[n];
+                        }
+                    }
+                }});
+                
             }
         }
 

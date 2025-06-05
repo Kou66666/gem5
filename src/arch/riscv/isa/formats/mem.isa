@@ -172,6 +172,55 @@ def template MatrixLoadBExecute {{
     }
 }};
 
+def template MatrixStoreAExecute {{
+    Fault
+    %(class_name)s::execute(
+        ExecContext *xc, trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        const size_t matrix_size = 2 * 2;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+        if (fault != NoFault)
+            return fault;
+
+        %(memacc_code)s;
+
+        %(op_wb)s;
+        return NoFault;
+    }
+}};
+
+def template MatrixStoreBExecute {{
+    Fault
+    %(class_name)s::execute(
+        ExecContext *xc, trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        const size_t matrix_size = 2 * 3;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+        if (fault != NoFault)
+            return fault;
+
+        %(memacc_code)s;
+
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
 
 def template LoadExecute {{
     Fault
@@ -358,6 +407,77 @@ def template StoreCompleteAcc {{
     }
 }};
 
+def template MatrixStoreAInitiateAcc {{
+    Fault
+    %(class_name)s::initiateAcc(ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        Addr EA;
+
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        %(memacc_code)s;
+
+        {
+            Fault fault = writeMemTimingLE(xc, traceData, Mem, EA,
+                memAccessFlags, nullptr);
+            if (fault != NoFault)
+                return fault;
+        }
+
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+def template MatrixStoreACompleteAcc {{
+    Fault
+    %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        return NoFault;
+    }
+}};
+
+
+def template MatrixStoreBInitiateAcc {{
+    Fault
+    %(class_name)s::initiateAcc(ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        Addr EA;
+
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        %(memacc_code)s;
+
+        {
+            Fault fault = writeMemTimingLE(xc, traceData, Mem, EA,
+                memAccessFlags, nullptr);
+            if (fault != NoFault)
+                return fault;
+        }
+
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+def template MatrixStoreBCompleteAcc {{
+    Fault
+    %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        return NoFault;
+    }
+}};
+
 def template CacheBlockBasedStoreExecute {{
     Fault
     %(class_name)s::execute(ExecContext *xc,
@@ -491,6 +611,22 @@ def format Store(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
     (header_output, decoder_output, decode_block, exec_output) = \
         LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
         inst_flags, 'Store', exec_template_base='Store')
+}};
+
+def format MatrixStoreA(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
+        offset_code={{offset = sext<12>(IMM5 | (IMM7 << 5));}},
+        mem_flags=[], inst_flags=[]) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
+        inst_flags, 'Store', exec_template_base='MatrixStoreA')
+}};
+
+def format MatrixStoreB(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
+        offset_code={{offset = sext<12>(IMM5 | (IMM7 << 5));}},
+        mem_flags=[], inst_flags=[]) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
+        inst_flags, 'Store', exec_template_base='MatrixStoreB')
 }};
 
 def format CBMOp(memacc_code, ea_code={{EA = rvSext(Rs1);}},
