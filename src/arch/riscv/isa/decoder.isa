@@ -2841,15 +2841,26 @@ decode QUADRANT default Unknown::unknown() {
                     }
                 }}, MatrixOp);
 
-                0x0: MatrixLoad::tlda({{
+                0x0: MatrixLoadA::tmlda({{
                     int m, n;
                     for (m = 0; m < 2; m++) {
                         auto row_tmd = tmd.asHSlice<int>(m);
                         for (n = 0; n < 2; n++) {
-                            row_tmd[n] = Mem_sb;
+                            row_tmd[n] = *((uint8_t*)&Mem + m * 2 + n);
                         }
                     }
                 }});
+
+                0x2: MatrixLoadB::tmldb({{
+                    int m, n;
+                    for (m = 0; m < 2; m++) {
+                        auto row_tmd = tmd.asHSlice<int>(m);
+                        for (n = 0; n < 3; n++) {
+                            row_tmd[n] = *((uint8_t*)&Mem + m * 2 + n);
+                        }
+                    }
+                }});
+
             }
         }
 

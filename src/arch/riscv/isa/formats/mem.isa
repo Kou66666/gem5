@@ -120,6 +120,59 @@ def LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
         completeAccTemplate.subst(iop))
 }};
 
+def template MatrixLoadAExecute {{
+    Fault
+    %(class_name)s::execute(
+        ExecContext *xc, trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        const size_t matrix_size = 2 * 2;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        // Read the entire matrix data
+        Fault fault = xc->readMem(EA, reinterpret_cast<uint8_t*>(Mem), matrix_size, memAccessFlags, byte_enable);
+        if (fault != NoFault)
+            return fault;
+
+        %(memacc_code)s;
+
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+def template MatrixLoadBExecute {{
+    Fault
+    %(class_name)s::execute(
+        ExecContext *xc, trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        const size_t matrix_size = 2 * 3;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        // Read the entire matrix data
+        Fault fault = xc->readMem(EA, reinterpret_cast<uint8_t*>(Mem), matrix_size, memAccessFlags, byte_enable);
+        if (fault != NoFault)
+            return fault;
+
+        %(memacc_code)s;
+
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+
 def template LoadExecute {{
     Fault
     %(class_name)s::execute(
@@ -140,6 +193,70 @@ def template LoadExecute {{
 
         %(memacc_code)s;
 
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+def template MatrixLoadAInitiateAcc {{
+    Fault
+    %(class_name)s::initiateAcc(ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        Addr EA;
+
+        %(op_src_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        return initiateMemRead(xc, traceData, EA, Mem, memAccessFlags);
+    }
+}};
+
+def template MatrixLoadACompleteAcc {{
+    Fault
+    %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        %(op_decl)s;
+        %(op_rd)s;
+
+        getMemLE(pkt, Mem, traceData);
+
+        %(memacc_code)s;
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+def template MatrixLoadBInitiateAcc {{
+    Fault
+    %(class_name)s::initiateAcc(ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        Addr EA;
+
+        %(op_src_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        return initiateMemRead(xc, traceData, EA, Mem, memAccessFlags);
+    }
+}};
+
+def template MatrixLoadBCompleteAcc {{
+    Fault
+    %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        %(op_decl)s;
+        %(op_rd)s;
+
+        getMemLE(pkt, Mem, traceData);
+
+        %(memacc_code)s;
         %(op_wb)s;
 
         return NoFault;
@@ -351,13 +468,22 @@ def format Load(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
         inst_flags, 'Load', exec_template_base='Load')
 }};
 
-def format MatrixLoad(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
+def format MatrixLoadA(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
         offset_code={{offset = sext<12>(IMM12);}},
         mem_flags=[], inst_flags=[]) {{
     (header_output, decoder_output, decode_block, exec_output) = \
         LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
-        inst_flags, 'Load', exec_template_base='Load')
+        inst_flags, 'Load', exec_template_base='MatrixLoadA')
 }};
+
+def format MatrixLoadB(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
+        offset_code={{offset = sext<12>(IMM12);}},
+        mem_flags=[], inst_flags=[]) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
+        inst_flags, 'Load', exec_template_base='MatrixLoadB')
+}};
+
 
 def format Store(memacc_code, ea_code={{EA = rvSext(Rs1 + offset);}},
         offset_code={{offset = sext<12>(IMM5 | (IMM7 << 5));}},
