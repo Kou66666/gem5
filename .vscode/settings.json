@@ -3,5 +3,13 @@
         "src/python",
         "ext",
         "tests"
-    ]
+    ],
+    "files.associations": {
+        "*.inc": "cpp",
+        "ios": "cpp",
+        "regex": "cpp",
+        "__locale": "cpp",
+        "locale": "cpp",
+        "thread": "cpp"
+    }
 }
