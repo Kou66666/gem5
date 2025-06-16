@@ -184,14 +184,14 @@ def template MatrixStoreAExecute {{
         %(op_rd)s;
         %(ea_code)s;
 
+        %(memacc_code)s;
+      
         const size_t matrix_size = 2 * 2;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
         if (fault != NoFault)
             return fault;
-
-        %(memacc_code)s;
 
         %(op_wb)s;
         return NoFault;
@@ -208,14 +208,14 @@ def template MatrixStoreBExecute {{
         %(op_rd)s;
         %(ea_code)s;
 
+        %(memacc_code)s;
+      
         const size_t matrix_size = 2 * 3;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
         if (fault != NoFault)
             return fault;
-
-        %(memacc_code)s;
 
         %(op_wb)s;
 
@@ -261,7 +261,6 @@ def template MatrixLoadAInitiateAcc {{
         %(op_rd)s;
         %(ea_code)s;
 
-       //  DPRINTF(RiscvMisc, "MatrixLoadA: EA = %#x, Rs1 = %#x\n", EA, xc->getRegOperand(this, 1));
         DPRINTF(RiscvMisc, "MatrixLoadA: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
@@ -455,12 +454,22 @@ def template MatrixStoreAInitiateAcc {{
 
         %(memacc_code)s;
 
-        {
-            Fault fault = writeMemTimingLE(xc, traceData, Mem, EA,
-                memAccessFlags, nullptr);
-            if (fault != NoFault)
-                return fault;
+
+        DPRINTF(RiscvMisc, "MatrixStoreA: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
+        EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
+
+        const size_t matrix_size = 2 * 2;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        DPRINTF(RiscvMisc, "MatrixStoreA: Memory content before writeMem:\n");
+        for (int i = 0; i < matrix_size; i++) {
+            DPRINTF(RiscvMisc, "MatrixStoreA Mem[%d] = %d\n", i, ((uint8_t*)&Mem)[i]);
         }
+
+        Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+
+        if (fault != NoFault)
+            return fault;
 
         %(op_wb)s;
 
@@ -491,12 +500,21 @@ def template MatrixStoreBInitiateAcc {{
 
         %(memacc_code)s;
 
-        {
-            Fault fault = writeMemTimingLE(xc, traceData, Mem, EA,
-                memAccessFlags, nullptr);
-            if (fault != NoFault)
-                return fault;
+        DPRINTF(RiscvMisc, "MatrixStoreB: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
+        EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
+
+        const size_t matrix_size = 2 * 3;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        DPRINTF(RiscvMisc, "MatrixStoreB: Memory content before writeMem:\n");
+        for (int i = 0; i < matrix_size; i++) {
+            DPRINTF(RiscvMisc, "MatrixStoreB Mem[%d] = %d\n", i, ((uint8_t*)&Mem)[i]);
         }
+
+        Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+
+        if (fault != NoFault)
+            return fault;
 
         %(op_wb)s;
 

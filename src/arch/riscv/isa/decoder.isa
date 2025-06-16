@@ -2839,6 +2839,28 @@ decode QUADRANT default Unknown::unknown() {
                             }
                         }
                     }
+                    tmd =tmd;
+
+                    DPRINTF(RiscvMisc, "Decode TMM Tms1 content: \n");
+                    for (m = 0; m < 2; m++) {
+                        for (n = 0; n < 2; n++) {
+                            DPRINTF(RiscvMisc, "Decode TMM tms1[%d][%d] = %d\n", m, n, tms1.asHSlice<int>(m)[n]);
+                        }
+                    }
+                    DPRINTF(RiscvMisc, "Decode TMM Tms2 content: \n");
+                    for (m = 0; m < 2; m++) {
+                        for (n = 0; n < 3; n++) {
+                            DPRINTF(RiscvMisc, "Decode TMM tms2[%d][%d] = %d\n", m, n, tms2.asHSlice<int>(m)[n]);
+                        }
+                    }
+                  
+                    DPRINTF(RiscvMisc, "Decode TMM Tmd content: \n");
+                    for (m = 0; m < 2; m++) {
+                        for (n = 0; n < 3; n++) {
+                            DPRINTF(RiscvMisc, "Decode TMM tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                        }
+                    }
+
                 }}, MatrixOp);
 
                 0x0: MatrixLoadA::tmlda({{
@@ -2849,6 +2871,7 @@ decode QUADRANT default Unknown::unknown() {
                             row_tmd[n] = *((uint8_t*)&Mem + m * 2 + n);
                         }
                     }
+                    tmd = tmd;
                 }});
 
                 0x2: MatrixLoadB::tmldb({{
@@ -2856,17 +2879,32 @@ decode QUADRANT default Unknown::unknown() {
                     for (m = 0; m < 2; m++) {
                         auto row_tmd = tmd.asHSlice<int>(m);
                         for (n = 0; n < 3; n++) {
-                            row_tmd[n] = *((uint8_t*)&Mem + m * 2 + n);
+                            row_tmd[n] = *((uint8_t*)&Mem + m * 3 + n);
                         }
                     }
+                    tmd = tmd;
                 }});
 
                 0x3: MatrixStoreA::tmsta({{
                     int m, n;
                     for (m = 0; m < 2; m++) {
-                        auto row_tms1 = tms1.asHSlice<int>(m);
+                        auto row_tmd = tmd.asHSlice<int>(m);
                         for (n = 0; n < 2; n++) {
-                            *((uint8_t*)&Mem + m * 2 + n) = row_tms1[n];
+                            *((uint8_t*)&Mem + m * 2 + n) = row_tmd[n];
+                        }
+                    }
+
+                    DPRINTF(RiscvMisc, "Decode StoreA Tms content: \n");
+                    for (m = 0; m < 2; m++) {
+                        for (n = 0; n < 2; n++) {
+                            DPRINTF(RiscvMisc, "Decode StoreA tms[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                        }
+                    }
+
+                    DPRINTF(RiscvMisc, "Decode Memory content: \n");
+                    for (m = 0; m < 2; m++) {
+                        for (n = 0; n < 2; n++) {
+                            DPRINTF(RiscvMisc, "Decode StoreA %d \n", (int)*((uint8_t*)&Mem + m * 3 + n));
                         }
                     }
                 }});
@@ -2874,9 +2912,23 @@ decode QUADRANT default Unknown::unknown() {
                 0x4: MatrixStoreB::tmstb({{
                     int m, n;
                     for (m = 0; m < 2; m++) {
-                        auto row_tms1 = tms1.asHSlice<int>(m);
+                        auto row_tmd = tmd.asHSlice<int>(m);
                         for (n = 0; n < 3; n++) {
-                            *((uint8_t*)&Mem + m * 3 + n) = row_tms1[n];
+                            *((uint8_t*)&Mem + m * 3 + n) = row_tmd[n];
+                        }
+                    }
+                
+                    DPRINTF(RiscvMisc, "Decode StoreB Tms content: \n");
+                    for (m = 0; m < 2; m++) {
+                        for (n = 0; n < 3; n++) {
+                            DPRINTF(RiscvMisc, "Decode StoreB tms[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                        }
+                    }
+
+                    DPRINTF(RiscvMisc, "Decode StoreB Memory content: \n");
+                    for (m = 0; m < 2; m++) {
+                        for (n = 0; n < 3; n++) {
+                            DPRINTF(RiscvMisc, "Decode StoreB %d \n", (int)*((uint8_t*)&Mem + m * 3 + n));
                         }
                     }
                 }});
