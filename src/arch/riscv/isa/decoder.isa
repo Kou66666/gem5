@@ -2866,17 +2866,16 @@ decode QUADRANT default Unknown::unknown() {
 
                 0x0: MatrixLoadA::tmlda({{
                     int m, n;
-                    for (m = 0; m < 2; m++) {
+                    for (m = 0; m < tmsize.m; m++) {
                         auto row_tmd = tmd.asHSlice<int>(m);
-                        for (n = 0; n < 2; n++) {
-                            row_tmd[n] = *((uint8_t*)&Mem + m * 2 + n);
+                        for (n = 0; n < tmsize.k; n++) {
+                            row_tmd[n] = *((uint8_t*)&Mem + m * tmsize.k + n);
                         }
                     }
                     tmd = tmd;
                 }});
 
                 0x2: MatrixLoadB::tmldb({{
-                    TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
                     int m, n;
                     for (m = 0; m < tmsize.k; m++) {
                         auto row_tmd = tmd.asHSlice<int>(m);
@@ -2887,7 +2886,19 @@ decode QUADRANT default Unknown::unknown() {
                     tmd = tmd;
                 }});
 
-                0x3: MatrixStoreA::tmsta({{
+                0x3: MatrixLoadC::tmldc({{
+                    int m, n;
+                    for (m = 0; m < tmsize.m; m++) {
+                        auto row_tmd = tmd.asHSlice<int>(m);
+                        for (n = 0; n < tmsize.n; n++) {
+                            row_tmd[n] = *((uint8_t*)&Mem + m * tmsize.n + n);
+                        }
+                    }
+                    tmd = tmd;
+                }});
+
+
+                0x4: MatrixStoreA::tmsta({{
                     TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
                     int m, n;
                     for (m = 0; m < tmsize.m; m++) {
@@ -2912,7 +2923,7 @@ decode QUADRANT default Unknown::unknown() {
                     }
                 }});
 
-                0x4: MatrixStoreB::tmstb({{
+                0x5: MatrixStoreB::tmstb({{
                     TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
                     int m, n;
                     for (m = 0; m < tmsize.k; m++) {
@@ -2933,6 +2944,31 @@ decode QUADRANT default Unknown::unknown() {
                     for (m = 0; m < tmsize.k; m++) {
                         for (n = 0; n < tmsize.n; n++) {
                             DPRINTF(RiscvMisc, "Decode StoreB %d \n", (int)*((uint8_t*)&Mem + m * tmsize.n + n));
+                        }
+                    }
+                }});
+                
+                0x6: MatrixStoreC::tmstc({{
+                    int m, n;
+                    TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+                    for (m = 0; m < tmsize.m; m++) {
+                        auto row_tmd = tmd.asHSlice<int>(m);
+                        for (n = 0; n < tmsize.n; n++) {
+                            *((uint8_t*)&Mem + m * tmsize.n + n) = row_tmd[n];
+                        }
+                    }
+                
+                    DPRINTF(RiscvMisc, "Decode StoreC Tmd content: \n");
+                    for (m = 0; m < tmsize.m; m++) {
+                        for (n = 0; n < tmsize.n; n++) {
+                            DPRINTF(RiscvMisc, "Decode StoreC tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                        }
+                    }
+
+                    DPRINTF(RiscvMisc, "Decode StoreC Memory content: \n");
+                    for (m = 0; m < tmsize.m; m++) {
+                        for (n = 0; n < tmsize.n; n++) {
+                            DPRINTF(RiscvMisc, "Decode StoreC %d \n", (int)*((uint8_t*)&Mem + m * tmsize.n + n));
                         }
                     }
                 }});

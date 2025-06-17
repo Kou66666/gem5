@@ -132,7 +132,8 @@ def template MatrixLoadAExecute {{
 
         DPRINTF(RiscvMisc, "MatrixLoadA: EA = %#x, Rs1 = %#x\n", EA, xc->getRegOperand(this, 0));
 
-        const size_t matrix_size = 2 * 2;
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+        const size_t matrix_size = tmsize.m * tmsize.k;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         // Read the entire matrix data
@@ -158,7 +159,10 @@ def template MatrixLoadBExecute {{
         %(op_rd)s;
         %(ea_code)s;
 
-        const size_t matrix_size = 2 * 3;
+        DPRINTF(RiscvMisc, "MatrixLoadB: EA = %#x, Rs1 = %#x\n", EA, xc->getRegOperand(this, 0));
+        
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+        const size_t matrix_size = tmsize.k * tmsize.n;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         // Read the entire matrix data
@@ -186,7 +190,7 @@ def template MatrixStoreAExecute {{
 
         %(memacc_code)s;
       
-        const size_t matrix_size = 2 * 2;
+        const size_t matrix_size = tmsize.m * tmsize.k;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
@@ -210,7 +214,7 @@ def template MatrixStoreBExecute {{
 
         %(memacc_code)s;
       
-        const size_t matrix_size = 2 * 3;
+        const size_t matrix_size = tmsize.k * tmsize.n;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
@@ -264,7 +268,8 @@ def template MatrixLoadAInitiateAcc {{
         DPRINTF(RiscvMisc, "MatrixLoadA: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
-        const size_t matrix_size = 2 * 2;
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+        const size_t matrix_size = tmsize.m * tmsize.k;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         Fault fault = initiateMemRead(xc, EA, matrix_size, memAccessFlags, byte_enable);
@@ -280,16 +285,16 @@ def template MatrixLoadACompleteAcc {{
     {
         %(op_decl)s;
         %(op_rd)s;
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
 
         memcpy(reinterpret_cast<uint8_t*>(&Mem), pkt->getPtr<uint8_t>(), pkt->getSize());
-
 
         %(memacc_code)s;
         %(op_wb)s;
 
         DPRINTF(RiscvMisc, "MatrixLoadA: Matrix Register Data:\n");
-        for (int m = 0; m < 2; m++) {
-            for (int n = 0; n < 2; n++) {
+        for (int m = 0; m < tmsize.m; m++) {
+            for (int n = 0; n < tmsize.k; n++) {
                 DPRINTF(RiscvMisc, "tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
             }
         }
@@ -312,7 +317,8 @@ def template MatrixLoadBInitiateAcc {{
         DPRINTF(RiscvMisc, "MatrixLoadB: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
-        const size_t matrix_size = 2 * 3;
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+        const size_t matrix_size = tmsize.k * tmsize.n;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         Fault fault = initiateMemRead(xc, EA, matrix_size, memAccessFlags, byte_enable);
@@ -328,6 +334,7 @@ def template MatrixLoadBCompleteAcc {{
     {
         %(op_decl)s;
         %(op_rd)s;
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
 
         memcpy(reinterpret_cast<uint8_t*>(&Mem), pkt->getPtr<uint8_t>(), pkt->getSize());
 
@@ -336,8 +343,8 @@ def template MatrixLoadBCompleteAcc {{
         %(op_wb)s;
 
         DPRINTF(RiscvMisc, "MatrixLoadB: Matrix Register Data:\n");
-        for (int m = 0; m < 2; m++) {
-            for (int n = 0; n < 3; n++) {
+        for (int m = 0; m < tmsize.k; m++) {
+            for (int n = 0; n < tmsize.n; n++) {
                 DPRINTF(RiscvMisc, "tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
             }
         }
@@ -458,7 +465,7 @@ def template MatrixStoreAInitiateAcc {{
         DPRINTF(RiscvMisc, "MatrixStoreA: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
-        const size_t matrix_size = 2 * 2;
+        const size_t matrix_size = tmsize.m * tmsize.k;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         DPRINTF(RiscvMisc, "MatrixStoreA: Memory content before writeMem:\n");
@@ -503,7 +510,7 @@ def template MatrixStoreBInitiateAcc {{
         DPRINTF(RiscvMisc, "MatrixStoreB: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
-        const size_t matrix_size = 2 * 3;
+        const size_t matrix_size = tmsize.k * tmsize.n;
         const std::vector<bool> byte_enable(matrix_size, true);
 
         DPRINTF(RiscvMisc, "MatrixStoreB: Memory content before writeMem:\n");
@@ -527,6 +534,103 @@ def template MatrixStoreBCompleteAcc {{
     %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
         trace::InstRecord *traceData) const
     {
+        return NoFault;
+    }
+}};
+
+def template MatrixLoadCExecute {{
+    Fault
+    %(class_name)s::execute(
+        ExecContext *xc, trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        DPRINTF(RiscvMisc, "MatrixLoadC: EA = %#x, Rs1 = %#x\n", EA, xc->getRegOperand(this, 0));
+
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+        const size_t matrix_size = tmsize.m * tmsize.n;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        // Read the entire matrix data
+        Fault fault = xc->readMem(EA, reinterpret_cast<uint8_t*>(Mem), matrix_size, memAccessFlags, byte_enable);
+        if (fault != NoFault)
+            return fault;
+
+        %(memacc_code)s;
+
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+def template MatrixLoadCInitiateAcc {{
+    Fault
+    %(class_name)s::initiateAcc(ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        Addr EA;
+
+        %(op_src_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        DPRINTF(RiscvMisc, "MatrixLoadC: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
+        EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
+
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+        const size_t matrix_size = tmsize.m * tmsize.n;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        Fault fault = initiateMemRead(xc, EA, matrix_size, memAccessFlags, byte_enable);
+
+        return fault;
+    }
+}};
+
+def template MatrixLoadCCompleteAcc {{
+    Fault
+    %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        %(op_decl)s;
+        %(op_rd)s;
+
+        TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+        memcpy(reinterpret_cast<uint8_t*>(&Mem), pkt->getPtr<uint8_t>(), pkt->getSize());
+
+        %(memacc_code)s;
+        %(op_wb)s;
+
+        DPRINTF(RiscvMisc, "MatrixLoadC: Matrix Register Data loaded\n");
+
+        return NoFault;
+    }
+}};
+
+def template MatrixStoreCExecute {{
+    Fault
+    %(class_name)s::execute(
+        ExecContext *xc, trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        %(memacc_code)s;
+      
+        const size_t matrix_size = tmsize.m * tmsize.n;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+        if (fault != NoFault)
+            return fault;
+
+        %(op_wb)s;
         return NoFault;
     }
 }};
@@ -680,6 +784,64 @@ def format MatrixStoreB(memacc_code, ea_code={{EA = rvSext(Rs1);}},
     (header_output, decoder_output, decode_block, exec_output) = \
         LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
         inst_flags, 'Store', exec_template_base='MatrixStoreB')
+}};
+
+def template MatrixStoreCInitiateAcc {{
+    Fault
+    %(class_name)s::initiateAcc(ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        Addr EA;
+
+        %(op_decl)s;
+        %(op_rd)s;
+        %(ea_code)s;
+
+        %(memacc_code)s;
+
+        DPRINTF(RiscvMisc, "MatrixStoreC: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
+        EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
+
+        // Get dimensions from matrix size register
+        const size_t matrix_size = tmsize.m * tmsize.n;
+        const std::vector<bool> byte_enable(matrix_size, true);
+
+        DPRINTF(RiscvMisc, "MatrixStoreC: Writing matrix data\n");
+
+        Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+
+        if (fault != NoFault)
+            return fault;
+
+        %(op_wb)s;
+
+        return NoFault;
+    }
+}};
+
+def template MatrixStoreCCompleteAcc {{
+    Fault
+    %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        return NoFault;
+    }
+}};
+
+def format MatrixLoadC(memacc_code, ea_code={{EA = rvSext(Rs1);}},
+        offset_code={{offset = sext<12>(IMM12);}},
+        mem_flags=[], inst_flags=[]) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
+        inst_flags, 'Load', exec_template_base='MatrixLoadC')
+}};
+
+def format MatrixStoreC(memacc_code, ea_code={{EA = rvSext(Rs1);}},
+        offset_code={{offset = sext<12>(IMM5 | (IMM7 << 5));}},
+        mem_flags=[], inst_flags=[]) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        LoadStoreBase(name, Name, offset_code, ea_code, memacc_code, mem_flags,
+        inst_flags, 'Store', exec_template_base='MatrixStoreC')
 }};
 
 def format CBMOp(memacc_code, ea_code={{EA = rvSext(Rs1);}},
