@@ -608,6 +608,20 @@ ISA::readMiscReg(RegIndex idx)
             return readMiscRegNoEffect(MISCREG_FFLAGS) |
                   (readMiscRegNoEffect(MISCREG_FRM) << FRM_OFFSET);
         }
+      case MISCREG_TMDATA:
+        {
+            TMDATA tmdata = readMiscRegNoEffect(idx);
+            return (tmdata.tile_c_datatype << 16) |
+                   (tmdata.tile_b_datatype << 8) |
+                   tmdata.tile_a_datatype;
+        }
+      case MISCREG_TMSIZE:
+        {
+            TMSIZE tmsize = readMiscRegNoEffect(idx);
+            return (tmsize.k << 20) |
+                   (tmsize.n << 10) |
+                   tmsize.m;
+        }
       default:
         // Try reading HPM counters
         // As a placeholder, all HPM counters are just cycle counters
@@ -895,6 +909,24 @@ ISA::setMiscReg(RegIndex idx, RegVal val)
             {
                 setMiscRegNoEffect(MISCREG_FFLAGS, bits(val, 4, 0));
                 setMiscRegNoEffect(MISCREG_FRM, bits(val, 7, 5));
+            }
+            break;
+          case MISCREG_TMDATA:
+            {
+                TMDATA tmdata = readMiscRegNoEffect(idx);
+                tmdata.tile_c_datatype = bits(val, 23, 16);
+                tmdata.tile_b_datatype = bits(val, 15, 8);
+                tmdata.tile_a_datatype = bits(val, 7, 0);
+                setMiscRegNoEffect(idx, tmdata);
+            }
+            break;
+          case MISCREG_TMSIZE:
+            {
+                TMSIZE tmsize = readMiscRegNoEffect(idx);
+                tmsize.k = bits(val, 29, 20);
+                tmsize.n = bits(val, 19, 10);
+                tmsize.m = bits(val, 9, 0);
+                setMiscRegNoEffect(idx, tmsize);
             }
             break;
           default:
