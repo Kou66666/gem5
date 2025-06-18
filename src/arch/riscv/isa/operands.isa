@@ -47,7 +47,8 @@ def operand_types {{
     'vwu'   : 'vwu',
     'vext'  : 'vext',
     'vextu' : 'vextu',
-    'vc'    : 'RiscvISA::VecRegContainer'
+    'vc'    : 'RiscvISA::VecRegContainer',
+    'mt'    : 'RiscvISA::MatRegContainer'
 }};
 
 let {{
