@@ -265,14 +265,21 @@ def template MatrixLoadAInitiateAcc {{
         %(op_rd)s;
         %(ea_code)s;
 
-        DPRINTF(RiscvMisc, "MatrixLoadA: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
+        DPRINTF(RiscvMisc, "MatrixLoadA InitiateAcc: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
         TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
         const size_t matrix_size = tmsize.m * tmsize.k;
         const std::vector<bool> byte_enable(matrix_size, true);
 
+        DPRINTF(RiscvMisc, "MatrixLoadA InitiateAcc: matrix_size = %#x, tmsize.m = %#x tmsize.n: %#x \n",
+        matrix_size, tmsize.m, tmsize.n);
+
         Fault fault = initiateMemRead(xc, EA, matrix_size, memAccessFlags, byte_enable);
+
+        DPRINTF(RiscvMisc, "MatrixLoadA InitiateAcc: initiateMemRead sent matrix_size: %#x \n",
+        matrix_size);
+
 
         return fault;
     }
@@ -287,7 +294,15 @@ def template MatrixLoadACompleteAcc {{
         %(op_rd)s;
         TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
 
+        DPRINTF(RiscvMisc, "MatrixLoadA completeAcc: tmsize = %#x, tmsize.m = %#x tmsize.n: %#x \n",
+        tmsize, tmsize.m, tmsize.n);
+
+        DPRINTF(RiscvMisc, "MatrixLoadA completeAcc: pkt_size: %#x \n",
+        pkt->getSize());
+
         memcpy(reinterpret_cast<uint8_t*>(&Mem), pkt->getPtr<uint8_t>(), pkt->getSize());
+
+        DPRINTF(RiscvMisc, "memcpy done \n");
 
         %(memacc_code)s;
         %(op_wb)s;
