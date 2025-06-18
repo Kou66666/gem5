@@ -477,6 +477,35 @@ class MatStore
         return VerticalSlice<ElemType, MyClass, false>(*this, 0, X, col_idx);
     }
 
+    /**
+     * Write raw data into the matrix container.
+     * @param data Pointer to the raw data.
+     * @param size Size of the data in bytes.
+     */
+    void writeRawData(const uint8_t* data, size_t size)
+    {
+        assert(size <= LINEAR_SIZE && "Data size exceeds matrix capacity");
+        memcpy(container.data(), data, size);
+    }
+    
+    /**
+     * Get a pointer to the raw data buffer.
+     * @return Pointer to the raw data buffer.
+     */
+    uint8_t* data() 
+    {
+        return container.data();
+    }
+    
+    /**
+     * Get a const pointer to the raw data buffer.
+     * @return Const pointer to the raw data buffer.
+     */
+    const uint8_t* data() const
+    {
+        return container.data();
+    }
+
     friend std::ostream&
     operator<<(std::ostream& os, const MatStore<X, Y>& v)
     {

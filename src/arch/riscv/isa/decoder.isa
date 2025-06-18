@@ -2869,7 +2869,7 @@ decode QUADRANT default Unknown::unknown() {
                     for (m = 0; m < tmsize.m; m++) {
                         auto row_tmd = tmd.asHSlice<int>(m);
                         for (n = 0; n < tmsize.k; n++) {
-                            row_tmd[n] = *((uint8_t*)&Mem + m * tmsize.k + n);
+                            row_tmd[n] = *((uint8_t*)&Mem_mt + m * tmsize.k + n);
                         }
                     }
                     tmd = tmd;
