@@ -820,17 +820,25 @@ def template MatrixStoreCInitiateAcc {{
         // Get dimensions from matrix size register
         const size_t matrix_size = tmsize.m * tmsize.n;
         const std::vector<bool> byte_enable(matrix_size, true);
-
-        // Ensure we're dealing with the raw bytes properly
-        uint8_t* raw_data = reinterpret_cast<uint8_t*>(Mem.getRawPtr<int8_t>());
-
+        
+        // Extract each individual value from the matrix
+        std::vector<uint8_t> byte_data(matrix_size);
+        for (int m = 0; m < tmsize.m; m++) {
+            for (int n = 0; n < tmsize.n; n++) {
+                // Get the value directly from the matrix view
+                int value = Mem.asHSlice<int>(m)[n];
+                // Store it as a byte in our vector
+                byte_data[m * tmsize.n + n] = static_cast<uint8_t>(value);
+            }
+        }
+        
         DPRINTF(RiscvMisc, "MatrixStoreC: Data to write:\n");
         for (size_t i = 0; i < matrix_size; i++) {
-            DPRINTF(RiscvMisc, "Data[%lu] = %d\n", static_cast<unsigned long>(i), raw_data[i]);
+            DPRINTF(RiscvMisc, "Data[%lu] = %d\n", static_cast<unsigned long>(i), byte_data[i]);
         }
         
         DPRINTF(RiscvMisc, "MatrixStoreC: Writing matrix data, size=%lu bytes\n", static_cast<unsigned long>(matrix_size));
-        Fault fault = xc->writeMem(raw_data, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+        Fault fault = xc->writeMem(byte_data.data(), matrix_size, EA, memAccessFlags, nullptr, byte_enable);
 
         if (fault != NoFault)
             return fault;
