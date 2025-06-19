@@ -477,7 +477,7 @@ def template MatrixStoreAInitiateAcc {{
         %(memacc_code)s;
 
 
-        DPRINTF(RiscvMisc, "MatrixStoreA: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
+        DPRINTF(RiscvMisc, "MatrixStoreA: EA = %#x, Rs1 = %#x Insn: %#x (index: %#d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
         const size_t matrix_size = tmsize.m * tmsize.k;
@@ -522,7 +522,7 @@ def template MatrixStoreBInitiateAcc {{
 
         %(memacc_code)s;
 
-        DPRINTF(RiscvMisc, "MatrixStoreB: EA = %#x, Rs1 = %#x Insn: %#x (index: %d) \n",
+        DPRINTF(RiscvMisc, "MatrixStoreB: EA = %#x, Rs1 = %#x Insn: %#x (index: %#d) \n",
         EA, xc->getRegOperand(this, 1), machInst, (machInst >> 15) & 0x1F);
 
         const size_t matrix_size = tmsize.k * tmsize.n;
@@ -821,9 +821,16 @@ def template MatrixStoreCInitiateAcc {{
         const size_t matrix_size = tmsize.m * tmsize.n;
         const std::vector<bool> byte_enable(matrix_size, true);
 
-        DPRINTF(RiscvMisc, "MatrixStoreC: Writing matrix data\n");
-    
-        Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
+        // Ensure we're dealing with the raw bytes properly
+        uint8_t* raw_data = reinterpret_cast<uint8_t*>(Mem.getRawPtr<int8_t>());
+
+        DPRINTF(RiscvMisc, "MatrixStoreC: Data to write:\n");
+        for (size_t i = 0; i < matrix_size; i++) {
+            DPRINTF(RiscvMisc, "Data[%lu] = %d\n", static_cast<unsigned long>(i), raw_data[i]);
+        }
+        
+        DPRINTF(RiscvMisc, "MatrixStoreC: Writing matrix data, size=%lu bytes\n", static_cast<unsigned long>(matrix_size));
+        Fault fault = xc->writeMem(raw_data, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
 
         if (fault != NoFault)
             return fault;

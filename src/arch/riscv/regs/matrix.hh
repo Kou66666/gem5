@@ -456,6 +456,14 @@ class MatStore
     ElemType* rawPtr() { return reinterpret_cast<ElemType*>(container.data()); }
 
   public:
+    /**
+     * @brief Public method to access raw pointer for byte-level operations.
+     * @tparam ElemType The type of element to interpret the data as.
+     * @return Pointer to the raw data cast to the specified element type.
+     */
+    template <typename ElemType>
+    ElemType* getRawPtr() { return rawPtr<ElemType>(); }
+
     template <typename ElemType>
     auto
     asTile(size_t index)
