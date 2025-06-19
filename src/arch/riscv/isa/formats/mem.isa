@@ -166,7 +166,7 @@ def template MatrixLoadBExecute {{
         const std::vector<bool> byte_enable(matrix_size, true);
 
         // Read the entire matrix data
-        Fault fault = xc->readMem(EA, reinterpret_cast<uint8_t*>(Mem), matrix_size, memAccessFlags, byte_enable);
+        Fault fault = xc->readMem(EA, Mem.data(), matrix_size, memAccessFlags, byte_enable);
         if (fault != NoFault)
             return fault;
 
@@ -351,7 +351,7 @@ def template MatrixLoadBCompleteAcc {{
         %(op_rd)s;
         TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
 
-        memcpy(reinterpret_cast<uint8_t*>(&Mem), pkt->getPtr<uint8_t>(), pkt->getSize());
+        memcpy(Mem.data(), pkt->getPtr<uint8_t>(), pkt->getSize());
 
 
         %(memacc_code)s;
@@ -570,7 +570,7 @@ def template MatrixLoadCExecute {{
         const std::vector<bool> byte_enable(matrix_size, true);
 
         // Read the entire matrix data
-        Fault fault = xc->readMem(EA, reinterpret_cast<uint8_t*>(Mem), matrix_size, memAccessFlags, byte_enable);
+        Fault fault = xc->readMem(EA, Mem.data(), matrix_size, memAccessFlags, byte_enable);
         if (fault != NoFault)
             return fault;
 
@@ -615,7 +615,7 @@ def template MatrixLoadCCompleteAcc {{
         %(op_rd)s;
 
         TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
-        memcpy(reinterpret_cast<uint8_t*>(&Mem), pkt->getPtr<uint8_t>(), pkt->getSize());
+        memcpy(Mem.data(), pkt->getPtr<uint8_t>(), pkt->getSize());
 
         %(memacc_code)s;
         %(op_wb)s;
@@ -822,7 +822,7 @@ def template MatrixStoreCInitiateAcc {{
         const std::vector<bool> byte_enable(matrix_size, true);
 
         DPRINTF(RiscvMisc, "MatrixStoreC: Writing matrix data\n");
-
+    
         Fault fault = xc->writeMem((uint8_t*)&Mem, matrix_size, EA, memAccessFlags, nullptr, byte_enable);
 
         if (fault != NoFault)
