@@ -2831,12 +2831,24 @@ decode QUADRANT default Unknown::unknown() {
                     int m, n, k;
                     TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
                     for (k = 0; k < tmsize.k; k++) {
-                        auto col_tms1 = tms1.asVSlice<int>(k);
-                        auto row_tms2 = tms2.asHSlice<int>(k);
+                        auto col_tms1 = tms1.asVSlice<int8_t>(k);
+                        auto row_tms2 = tms2.asHSlice<int8_t>(k);
                         for (m = 0; m < tmsize.m; m++) {
-                            auto row_tmd = tmd.asHSlice<int>(m);
+                            auto row_tmd = tmd.asHSlice<int32_t>(m);
                             for (n = 0; n < tmsize.n; n++) {
-                                row_tmd[n] += col_tms1[m] * row_tms2[n];
+                                // Signed extend to 32 bits before multiplication
+                                int32_t a_val = static_cast<int32_t>(col_tms1[m]);
+                                int32_t b_val = static_cast<int32_t>(row_tms2[n]);
+                                int32_t product = a_val * b_val;
+                                
+                                // 特别关注位置 (0, 0)
+                                if (m == 0 && n == 0) {
+                                    DPRINTF(RiscvMisc, "TMM[0,0]: k=%d, a_val=%d, b_val=%d, product=%d, current_sum=%d\n", 
+                                            k, a_val, b_val, product, row_tmd[n]);
+                                }
+                                
+                                // 确保累加不会溢出
+                                row_tmd[n] += product;
                             }
                         }
                     }
@@ -2845,20 +2857,20 @@ decode QUADRANT default Unknown::unknown() {
                     DPRINTF(RiscvMisc, "Decode TMM Tms1 content: \n");
                     for (m = 0; m < tmsize.m; m++) {
                         for (n = 0; n < tmsize.k; n++) {
-                            DPRINTF(RiscvMisc, "Decode TMM tms1[%d][%d] = %d\n", m, n, tms1.asHSlice<int>(m)[n]);
+                            DPRINTF(RiscvMisc, "Decode TMM tms1[%d][%d] = %d\n", m, n, tms1.asHSlice<int8_t>(m)[n]);
                         }
                     }
                     DPRINTF(RiscvMisc, "Decode TMM Tms2 content: \n");
                     for (m = 0; m < tmsize.k; m++) {
                         for (n = 0; n < tmsize.n; n++) {
-                            DPRINTF(RiscvMisc, "Decode TMM tms2[%d][%d] = %d\n", m, n, tms2.asHSlice<int>(m)[n]);
+                            DPRINTF(RiscvMisc, "Decode TMM tms2[%d][%d] = %d\n", m, n, tms2.asHSlice<int8_t>(m)[n]);
                         }
                     }
                   
                     DPRINTF(RiscvMisc, "Decode TMM Tmd content: \n");
                     for (m = 0; m < tmsize.m; m++) {
                         for (n = 0; n < tmsize.n; n++) {
-                            DPRINTF(RiscvMisc, "Decode TMM tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                            DPRINTF(RiscvMisc, "Decode TMM tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int32_t>(m)[n]);
                         }
                     }
 
@@ -2867,7 +2879,7 @@ decode QUADRANT default Unknown::unknown() {
                 0x0: MatrixLoadA::tmlda({{
                     int m, n;
                     for (m = 0; m < tmsize.m; m++) {
-                        auto row_tmd = tmd.asHSlice<int>(m);
+                        auto row_tmd = tmd.asHSlice<int8_t>(m);
                         for (n = 0; n < tmsize.k; n++) {
                             row_tmd[n] = *((uint8_t*)&Mem_mt + m * tmsize.k + n);
                         }
@@ -2878,7 +2890,7 @@ decode QUADRANT default Unknown::unknown() {
                 0x2: MatrixLoadB::tmldb({{
                     int m, n;
                     for (m = 0; m < tmsize.k; m++) {
-                        auto row_tmd = tmd.asHSlice<int>(m);
+                        auto row_tmd = tmd.asHSlice<int8_t>(m);
                         for (n = 0; n < tmsize.n; n++) {
                             row_tmd[n] = *((uint8_t*)&Mem_mt + m * tmsize.n + n);
                         }
@@ -2889,9 +2901,10 @@ decode QUADRANT default Unknown::unknown() {
                 0x3: MatrixLoadC::tmldc({{
                     int m, n;
                     for (m = 0; m < tmsize.m; m++) {
-                        auto row_tmd = tmd.asHSlice<int>(m);
+                        auto row_tmd = tmd.asHSlice<int32_t>(m);
                         for (n = 0; n < tmsize.n; n++) {
-                            row_tmd[n] = *((uint8_t*)&Mem_mt + m * tmsize.n + n);
+                            // Load int32_t values for C matrix
+                            row_tmd[n] = *((int32_t*)&Mem_mt + m * tmsize.n + n);
                         }
                     }
                     tmd = tmd;
@@ -2906,7 +2919,7 @@ decode QUADRANT default Unknown::unknown() {
                     DPRINTF(RiscvMisc, "Decode StoreA Tms content: \n");
                     for (m = 0; m < tmsize.m; m++) {
                         for (n = 0; n < tmsize.k; n++) {
-                            DPRINTF(RiscvMisc, "Decode StoreA tms[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                            DPRINTF(RiscvMisc, "Decode StoreA tms[%d][%d] = %d\n", m, n, tmd.asHSlice<int8_t>(m)[n]);
                         }
                     }
 
@@ -2924,7 +2937,7 @@ decode QUADRANT default Unknown::unknown() {
            
                     int m, n;
                     for (m = 0; m < tmsize.k; m++) {
-                        auto row_tmd = tmd.asHSlice<int>(m);
+                        auto row_tmd = tmd.asHSlice<int8_t>(m);
                         for (n = 0; n < tmsize.n; n++) {
                             *((uint8_t*)&Mem + m * tmsize.n + n) = row_tmd[n];
                         }
@@ -2933,7 +2946,7 @@ decode QUADRANT default Unknown::unknown() {
                     DPRINTF(RiscvMisc, "Decode StoreB Tms content: \n");
                     for (m = 0; m < tmsize.k; m++) {
                         for (n = 0; n < tmsize.n; n++) {
-                            DPRINTF(RiscvMisc, "Decode StoreB tms[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                            DPRINTF(RiscvMisc, "Decode StoreB tms[%d][%d] = %d\n", m, n, tmd.asHSlice<int8_t>(m)[n]);
                         }
                     }
 
@@ -2946,20 +2959,26 @@ decode QUADRANT default Unknown::unknown() {
                 }});
                 
                 0x6: MatrixStoreC::tmstc({{
-                    Mem_mt.writeRawData(reinterpret_cast<const uint8_t*>(tmd.data()), tmd.linearSize());
                     TMSIZE tmsize = xc->readMiscReg(MISCREG_TMSIZE);
+                    for (int m = 0; m < tmsize.m; m++) {
+                        auto row_tmd = tmd.asHSlice<int32_t>(m);
+                        for (int n = 0; n < tmsize.n; n++) {
+                            ((int32_t*)&Mem_mt)[m * tmsize.n + n] = row_tmd[n];
+                        }
+                    }
+                    
                     int m, n;
                     DPRINTF(RiscvMisc, "Decode StoreC Tmd content: \n");
                     for (m = 0; m < tmsize.m; m++) {
                         for (n = 0; n < tmsize.n; n++) {
-                            DPRINTF(RiscvMisc, "Decode StoreC tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int>(m)[n]);
+                            DPRINTF(RiscvMisc, "Decode StoreC tmd[%d][%d] = %d\n", m, n, tmd.asHSlice<int32_t>(m)[n]);
                         }
                     }
 
                     DPRINTF(RiscvMisc, "Decode StoreC Memory content: \n");
                     for (m = 0; m < tmsize.m; m++) {
                         for (n = 0; n < tmsize.n; n++) {
-                            DPRINTF(RiscvMisc, "Decode StoreC mem[%d][%d] = %d\n", m, n, Mem_mt.asHSlice<int>(m)[n]);
+                            DPRINTF(RiscvMisc, "Decode StoreC mem[%d][%d] = %d\n", m, n, Mem_mt.asHSlice<int32_t>(m)[n]);
                         }
                     }
 

@@ -79,6 +79,10 @@ def operands {{
 
     'a0': IntReg('ud', '10', 'IsInteger', 1),
     'a1': IntReg('ud', '11', 'IsInteger', 2),
+    'a2': IntReg('ud', '12', 'IsInteger', 3),
+    'a3': IntReg('ud', '13', 'IsInteger', 4),
+    'a4': IntReg('ud', '14', 'IsInteger', 5),
+    'a5': IntReg('ud', '15', 'IsInteger', 6),
 
     'CmPushReg': IntReg('ud', 'push_reg', 'IsInteger', 3),
     'CmPopReg': IntReg('ud', 'pop_reg', 'IsInteger', 1),
